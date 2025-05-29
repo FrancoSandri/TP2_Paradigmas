@@ -20,7 +20,7 @@ int main() {
                                   {0, 300, 1100});
         pokedex.agregarPokemon(bulbasaur, bulbasaurInfo);
 
-        cout << "[LOG] Agregando Charmander." << endl;
+        cout << "Agregando Charmander." << endl;
         Pokemon charmander("Charmander", 633);
         PokemonInfo charmanderInfo(charmander, "Fuego", "Una lagartija con una llama en su cola.",
                                    {{"Ascuas", 4}, {"Lanzallamas", 6}, {"Giro Fuego", 5}},
