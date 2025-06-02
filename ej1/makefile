@@ -18,6 +18,6 @@ valgrind: $(TARGET)
 	valgrind --leak-check=full --show-leak-kinds=all ./$(TARGET)
 
 clean:
-	rm -f $(TARGET) *.bin $(SRC_DIR)/*.bin
+	rm -f $(TARGET) *.bin $(SRC_DIR)/*.bin pokedex.dat
 
 rebuild: clean all

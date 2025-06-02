@@ -3,7 +3,7 @@
 
 int main() {
     cout << "Iniciando programa." << endl;
-    Pokedex pokedex("pokedex.csv");
+    Pokedex pokedex("pokedex.dat");
 
     try {
         cout << "Agregando Squirtle." << endl;

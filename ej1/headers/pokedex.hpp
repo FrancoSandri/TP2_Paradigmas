@@ -5,18 +5,16 @@
 #include <unordered_map>
 #include <string>
 
-namespace std {
-    template<>
-    struct hash<Pokemon> {
+class PokemonHash {
+    public:
         size_t operator()(const Pokemon& p) const {
             return hash<string>()(p.getNombre());
         }
-    };
-}
+};
 
 class Pokedex {
 private:
-    unordered_map<Pokemon, PokemonInfo, hash<Pokemon>> pokedex;
+    unordered_map<Pokemon, PokemonInfo, PokemonHash> pokedex;
     string archivo;
 
     void cargarDesdeArchivo();

@@ -5,175 +5,177 @@
 #include <stdexcept>
 
 Pokedex::Pokedex() : archivo("") {
-    cout << "Pokedex creada sin archivo." << endl;
+    std::cout << "Pokedex creada sin archivo." << std::endl;
 }
 
-Pokedex::Pokedex(const string& archivo) : archivo(archivo) {
-    cout << "Pokedex creada con archivo: " << archivo << endl;
+Pokedex::Pokedex(const std::string& archivo) : archivo(archivo) {
+    std::cout << "Pokedex creada con archivo: " << archivo << std::endl;
     cargarDesdeArchivo();
 }
 
 void Pokedex::cargarDesdeArchivo() {
     if (archivo.empty()) {
-        cout << "Error: No se especificó archivo para cargar." << endl;
+        std::cout << "Error: No se especificó archivo para cargar." << std::endl;
         return;
     }
-    ifstream file(archivo);
+    std::ifstream file(archivo, std::ios::binary);
     if (!file.is_open()) {
-        cerr << "Error: No se pudo abrir el archivo: " << archivo << endl;
+        std::cerr << "Error: No se pudo abrir el archivo: " << archivo << std::endl;
         return;
     }
 
-    string linea;
-    int lineaNum = 0;
-    while (getline(file, linea)) {
-        lineaNum++;
-        if (linea.empty()) {
-            cout << "Línea " << lineaNum << " vacía, omitiendo." << endl;
-            continue;
-        }
-
-        stringstream ss(linea);
-        string nombre, tipo, descripcion, ataqueNombre, token;
-        int experiencia, ataqueDanio;
-        unordered_map<string, int> ataques;
-        array<int, 3> expProximoNivel;
-
+    while (file.peek() != EOF) {
         try {
-            // Parse nombre (quoted)
-            if (ss.peek() != '"') throw runtime_error("Falta comilla inicial en nombre.");
-            ss.ignore(1);
-            getline(ss, nombre, '"');
-            ss.ignore(1); // Skip comma
+            // Read string lengths and strings
+            uint32_t nombreLen, tipoLen, descLen;
+            file.read(reinterpret_cast<char*>(&nombreLen), sizeof(nombreLen));
+            if (file.eof()) break; // End of file reached
+            std::string nombre(nombreLen, '\0');
+            file.read(&nombre[0], nombreLen);
 
-            // Parse experiencia
-            ss >> experiencia;
-            if (ss.fail()) throw runtime_error("Experiencia inválida.");
-            ss.ignore(1);
+            int experiencia;
+            file.read(reinterpret_cast<char*>(&experiencia), sizeof(experiencia));
 
-            // Parse tipo (quoted)
-            if (ss.peek() != '"') throw runtime_error("Falta comilla inicial en tipo.");
-            ss.ignore(1);
-            getline(ss, tipo, '"');
-            ss.ignore(1);
+            file.read(reinterpret_cast<char*>(&tipoLen), sizeof(tipoLen));
+            std::string tipo(tipoLen, '\0');
+            file.read(&tipo[0], tipoLen);
 
-            // Parse descripcion (quoted)
-            if (ss.peek() != '"') throw runtime_error("Falta comilla inicial en descripción.");
-            ss.ignore(1);
-            getline(ss, descripcion, '"');
-            ss.ignore(1);
+            file.read(reinterpret_cast<char*>(&descLen), sizeof(descLen));
+            std::string descripcion(descLen, '\0');
+            file.read(&descripcion[0], descLen);
 
-            // Parse ataques (3 ataques)
+            // Read attacks
+            std::unordered_map<std::string, int> ataques;
             for (int i = 0; i < 3; ++i) {
-                if (ss.peek() != '"') throw runtime_error("Falta comilla inicial en ataque.");
-                ss.ignore(1);
-                getline(ss, ataqueNombre, '"');
-                ss.ignore(1); // Skip colon
-                ss >> ataqueDanio;
-                if (ss.fail()) throw runtime_error("Daño de ataque inválido.");
-                ss.ignore(1); // Skip comma
+                uint32_t ataqueNombreLen;
+                file.read(reinterpret_cast<char*>(&ataqueNombreLen), sizeof(ataqueNombreLen));
+                std::string ataqueNombre(ataqueNombreLen, '\0');
+                file.read(&ataqueNombre[0], ataqueNombreLen);
+                int ataqueDanio;
+                file.read(reinterpret_cast<char*>(&ataqueDanio), sizeof(ataqueDanio));
                 ataques[ataqueNombre] = ataqueDanio;
             }
 
-            // Parse experienciaProximoNivel
+            // Read experience levels
+            std::array<int, 3> expProximoNivel;
             for (int i = 0; i < 3; ++i) {
-                ss >> expProximoNivel[i];
-                if (ss.fail()) throw runtime_error("Experiencia de nivel inválida.");
-                if (i < 2) ss.ignore(1);
+                file.read(reinterpret_cast<char*>(&expProximoNivel[i]), sizeof(expProximoNivel[i]));
             }
 
             Pokemon pokemon(nombre, experiencia);
             PokemonInfo info(pokemon, tipo, descripcion, ataques, expProximoNivel);
             pokedex.insert({pokemon, info});
-            cout << "Cargado Pokémon: " << nombre << endl;
-        } catch (const exception& e) {
-            cerr << "Error: Línea " << lineaNum << " inválida: " << e.what() << endl;
-            continue;
+            std::cout << "Cargado Pokémon: " << nombre << std::endl;
+        } catch (const std::exception& e) {
+            std::cerr << "Error al leer Pokémon: " << e.what() << std::endl;
+            break;
         }
     }
     file.close();
-    cout << "Carga de archivo completada." << endl;
+    std::cout << "Carga de archivo completada." << std::endl;
 }
 
 void Pokedex::guardarEnArchivo() const {
     if (archivo.empty()) {
-        cout << "Error: No se especificó archivo para guardar." << endl;
+        std::cout << "Error: No se especificó archivo para guardar." << std::endl;
         return;
     }
-    ofstream file(archivo);
+    std::ofstream file(archivo, std::ios::binary);
     if (!file.is_open()) {
-        throw runtime_error("Error: No se pudo abrir el archivo para escritura: " + archivo);
+        throw std::runtime_error("Error: No se pudo abrir el archivo para escritura: " + archivo);
     }
 
-    cout << "Guardando " << pokedex.size() << " Pokémon en " << archivo << endl;
+    std::cout << "Guardando " << pokedex.size() << " Pokémon en " << archivo << std::endl;
     for (const auto& entry : pokedex) {
         const Pokemon& pokemon = entry.first;
         const PokemonInfo& info = entry.second;
-        file << "\"" << pokemon.getNombre() << "\"," << pokemon.getExperiencia() << ","
-             << "\"" << info.getTipo() << "\",\"" << info.getDescripcion() << "\",";
-        
-        int ataqueCount = 0;
+
+        // Write nombre
+        const std::string& nombre = pokemon.getNombre();
+        uint32_t nombreLen = static_cast<uint32_t>(nombre.size());
+        file.write(reinterpret_cast<const char*>(&nombreLen), sizeof(nombreLen));
+        file.write(nombre.data(), nombreLen);
+
+        // Write experiencia
+        int experiencia = pokemon.getExperiencia();
+        file.write(reinterpret_cast<const char*>(&experiencia), sizeof(experiencia));
+
+        // Write tipo
+        const std::string& tipo = info.getTipo();
+        uint32_t tipoLen = static_cast<uint32_t>(tipo.size());
+        file.write(reinterpret_cast<const char*>(&tipoLen), sizeof(tipoLen));
+        file.write(tipo.data(), tipoLen);
+
+        // Write descripcion
+        const std::string& descripcion = info.getDescripcion();
+        uint32_t descLen = static_cast<uint32_t>(descripcion.size());
+        file.write(reinterpret_cast<const char*>(&descLen), sizeof(descLen));
+        file.write(descripcion.data(), descLen);
+
+        // Write attacks
         for (const auto& ataque : info.getAtaquesDisponiblesPorNivel()) {
-            file << "\"" << ataque.first << "\":" << ataque.second;
-            if (++ataqueCount < 3) file << ",";
+            uint32_t ataqueNombreLen = static_cast<uint32_t>(ataque.first.size());
+            file.write(reinterpret_cast<const char*>(&ataqueNombreLen), sizeof(ataqueNombreLen));
+            file.write(ataque.first.data(), ataqueNombreLen);
+            int ataqueDanio = ataque.second;
+            file.write(reinterpret_cast<const char*>(&ataqueDanio), sizeof(ataqueDanio));
         }
-        file << ",";
-        for (size_t i = 0; i < info.getExperienciaProximoNivel().size(); ++i) {
-            file << info.getExperienciaProximoNivel()[i];
-            if (i < 2) file << ",";
+
+        // Write experience levels
+        for (int exp : info.getExperienciaProximoNivel()) {
+            file.write(reinterpret_cast<const char*>(&exp), sizeof(exp));
         }
-        file << "\n";
     }
     file.close();
-    cout << "Guardado completado." << endl;
+    std::cout << "Guardado completado." << std::endl;
 }
 
 void Pokedex::agregarPokemon(const Pokemon& pokemon, const PokemonInfo& info) {
     if (pokedex.find(pokemon) != pokedex.end()) {
-        throw invalid_argument(pokemon.getNombre() + " ya existe en la Pokedex.");
+        throw std::invalid_argument(pokemon.getNombre() + " ya existe en la Pokedex.");
     }
     pokedex.insert({pokemon, info});
-    cout << "Agregado Pokémon: " << pokemon.getNombre() << endl;
+    std::cout << "Agregado Pokémon: " << pokemon.getNombre() << std::endl;
     guardarEnArchivo();
-    cout << pokemon.getNombre() << " fue agregado a la Pokedex." << endl;
+    std::cout << pokemon.getNombre() << " fue agregado a la Pokedex." << std::endl;
 }
 
 void Pokedex::mostrar(const Pokemon& pokemon) const {
     auto it = pokedex.find(pokemon);
     if (it != pokedex.end()) {
         const PokemonInfo& info = it->second;
-        cout << "Nombre: " << info.getPokemon().getNombre() << "\n"
+        std::cout << "Nombre: " << info.getPokemon().getNombre() << "\n"
                   << "Experiencia: " << info.getPokemon().getExperiencia() << "\n"
                   << "Tipo: " << info.getTipo() << "\n"
                   << "Descripción: " << info.getDescripcion() << "\n"
                   << "Ataques Disponibles:\n";
         for (const auto& ataque : info.getAtaquesDisponiblesPorNivel()) {
-            cout << "  - " << ataque.first << " (Daño: " << ataque.second << ")\n";
+            std::cout << "  - " << ataque.first << " (Daño: " << ataque.second << ")\n";
         }
-        cout << "Experiencia para Próximos Niveles:" << endl;
+        std::cout << "Experiencia para Próximos Niveles:" << std::endl;
         for (size_t i = 0; i < info.getExperienciaProximoNivel().size(); ++i) {
-            cout << "  - Nivel " << i << ": " << info.getExperienciaProximoNivel()[i] << "\n";
+            std::cout << "  - Nivel " << i << ": " << info.getExperienciaProximoNivel()[i] << "\n";
         }
     } else {
-        cout << "¡Pokémon desconocido!" << endl;
+        std::cout << "¡Pokémon desconocido!" << std::endl;
     }
 }
 
 void Pokedex::mostrarTodos() const {
     if (pokedex.empty()) {
-        cout << "La Pokedex está vacía." << endl;
+        std::cout << "La Pokedex está vacía." << std::endl;
         return;
     }
-    cout << "Mostrando todos los Pokémon." << endl;
+    std::cout << "Mostrando todos los Pokémon." << std::endl;
     for (const auto& entry : pokedex) {
         mostrar(entry.first);
-        cout << "------------------------\n";
+        std::cout << "------------------------\n";
     }
 }
 
 Pokedex::~Pokedex() {
-    cout << "Destruyendo Pokedex." << endl;
+    std::cout << "Destruyendo Pokedex." << std::endl;
     if (!archivo.empty()) {
-        cout << "Pokedex destruida." << endl;
+        std::cout << "Pokedex destruida." << std::endl;
     }
 }
