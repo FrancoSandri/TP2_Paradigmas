@@ -4,6 +4,7 @@
         "stdexcept": "cpp",
         "unordered_map": "cpp",
         "ostream": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "mutex": "cpp"
     }
 }
