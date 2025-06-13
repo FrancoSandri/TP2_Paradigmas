@@ -6,6 +6,8 @@
 #include <queue>
 #include <mutex>
 #include <chrono>
+#include <ctime>
+
 
 // Task structure 
 struct Tarea { 
@@ -23,6 +25,18 @@ int activeSensors = 3; // Number of sensors still generating tasks
 bool allSensorsDone = false;
 int globalTaskId = 1;
 
+std::vector<std::string> descripciones = {
+    "Transportar materiales al área de ensamblaje",
+    "Verificar la calidad de las piezas producidas",
+    "Soldar componentes metálicos",
+    "Empaquetar productos terminados",
+    "Lubricar maquinaria en la línea de producción",
+    "Clasificar piezas defectuosas",
+    "Cargar materias primas en la tolva de alimentación",
+    "Montar subcomponentes electrónicos",
+    "Inspeccionar niveles de inventario en estanterías",
+    "Paletizar cajas para su envío"
+};
 // Sensor function 
 void sensor(int id, int numTasks) { 
     for (int i = 1; i <= numTasks; ++i) { 
@@ -36,7 +50,7 @@ void sensor(int id, int numTasks) {
     }
 
     // Create task
-    Tarea tarea{id, taskId, "Tarea " + std::to_string(i) + " del sensor " + std::to_string(id)};
+    Tarea tarea{id, taskId, descripciones[rand() % descripciones.size()]};
 
     // Push task to queue
     {
@@ -44,7 +58,7 @@ void sensor(int id, int numTasks) {
         taskQueue.push(tarea);
         {
             std::lock_guard<std::mutex> consoleLock(consoleMutex);
-            std::cout << "Sensor " << id << " creó tarea " << taskId << std::endl;
+            std::cout << "Sensor " << id << " creó tarea " << taskId << ": " << tarea.descripcionTarea << std::endl;
         }
     }
 
@@ -73,6 +87,7 @@ void sensor(int id, int numTasks) {
 
 // Robot function 
 void robot(int id) { 
+    std::srand(std::time(nullptr));
     while (true) { 
         Tarea tarea; bool taskRetrieved = false;
     // Wait for a task or termination condition
