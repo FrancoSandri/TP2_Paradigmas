@@ -21,15 +21,22 @@ std::condition_variable taskAvailable;
 std::mutex consoleMutex; 
 int activeSensors = 3; // Number of sensors still generating tasks 
 bool allSensorsDone = false;
+int globalTaskId = 1;
 
 // Sensor function 
 void sensor(int id, int numTasks) { 
     for (int i = 1; i <= numTasks; ++i) { 
         // Simulate task creation (175ms) 
         std::this_thread::sleep_for(std::chrono::milliseconds(175));
+    
+     int taskId;
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        taskId = globalTaskId++;
+    }
 
     // Create task
-    Tarea tarea{id, i, "Tarea " + std::to_string(i) + " del sensor " + std::to_string(id)};
+    Tarea tarea{id, taskId, "Tarea " + std::to_string(i) + " del sensor " + std::to_string(id)};
 
     // Push task to queue
     {
@@ -37,7 +44,7 @@ void sensor(int id, int numTasks) {
         taskQueue.push(tarea);
         {
             std::lock_guard<std::mutex> consoleLock(consoleMutex);
-            std::cout << "Sensor " << id << " creó tarea " << i << std::endl;
+            std::cout << "Sensor " << id << " creó tarea " << taskId << std::endl;
         }
     }
 
@@ -93,8 +100,7 @@ void robot(int id) {
         // Report processing
         {
             std::lock_guard<std::mutex> consoleLock(consoleMutex);
-            std::cout << "Robot " << id << " procesó tarea " << tarea.idTarea
-                      << " del sensor " << tarea.idSensor << std::endl;
+            std::cout << "Robot " << id << " procesó tarea " << tarea.idTarea << std::endl;
         }
     }
 }
