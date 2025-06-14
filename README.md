@@ -1,6 +1,6 @@
 # TP2_Paradigmas
 
-# Para corre los ejs:
+## Para corre los ejs:
 -Pararse en la carpeta build: 
 
     cd ej1/build
