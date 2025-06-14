@@ -1,5 +1,5 @@
 #include <iostream>
-#include "headers/pokedex.hpp"
+#include "../headers/pokedex.hpp"
 
 int main() {
     cout << "Iniciando programa." << endl;

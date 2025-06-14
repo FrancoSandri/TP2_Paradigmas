@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <cstdint>
 
 Pokedex::Pokedex() : archivo("") {
     std::cout << "Pokedex creada sin archivo." << std::endl;
