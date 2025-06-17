@@ -9,19 +9,19 @@
 #include <ctime>
 
 
-// Task structure 
+// Struct de una tarea
 struct Tarea { 
     int idSensor; 
     int idTarea; 
     std::string descripcionTarea; 
 };
 
-// Global variables 
+// Variables globales
 std::queue<Tarea> taskQueue; 
 std::mutex queueMutex; 
 std::condition_variable taskAvailable; 
 std::mutex consoleMutex; 
-int activeSensors = 3; // Number of sensors still generating tasks 
+int activeSensors = 3; // Numero de sensores activos 
 bool allSensorsDone = false;
 int globalTaskId = 1;
 
@@ -40,7 +40,7 @@ std::vector<std::string> descripciones = {
 // Sensor function 
 void sensor(int id, int numTasks) { 
     for (int i = 1; i <= numTasks; ++i) { 
-        // Simulate task creation (175ms) 
+        // Simulamos una tarea (175ms) 
         std::this_thread::sleep_for(std::chrono::milliseconds(175));
     
      int taskId;
@@ -49,10 +49,10 @@ void sensor(int id, int numTasks) {
         taskId = globalTaskId++;
     }
 
-    // Create task
+    // Creamos una tarea con un id unico y una descripcion aleatoria
     Tarea tarea{id, taskId, descripciones[rand() % descripciones.size()]};
 
-    // Push task to queue
+    // Pusheamos la tarea a la cola de tareas
     {
         std::lock_guard<std::mutex> lock(queueMutex);
         taskQueue.push(tarea);
@@ -62,11 +62,11 @@ void sensor(int id, int numTasks) {
         }
     }
 
-    // Notify a waiting robot
+    // Avisamos a los robots que hay una tarea disponible
     taskAvailable.notify_one();
 }
 
-// Sensor finished generating tasks
+// Finalización del sensor
 {
     std::lock_guard<std::mutex> lock(queueMutex);
     --activeSensors;
@@ -76,7 +76,7 @@ void sensor(int id, int numTasks) {
             std::lock_guard<std::mutex> consoleLock(consoleMutex);
             std::cout << "Sensor " << id << " finalizó la generación de tareas" << std::endl;
         }
-        taskAvailable.notify_all(); // Wake all robots to check termination
+        taskAvailable.notify_all(); // Notificamos a los robots que todos los sensores terminaron
     } else {
         std::lock_guard<std::mutex> consoleLock(consoleMutex);
         std::cout << "Sensor " << id << " finalizó la generación de tareas" << std::endl;
@@ -90,29 +90,29 @@ void robot(int id) {
     std::srand(std::time(nullptr));
     while (true) { 
         Tarea tarea; bool taskRetrieved = false;
-    // Wait for a task or termination condition
+    // Esperamos a que haya una tarea disponible o que todos los sensores hayan terminado y que no hayan tareas pendientes
     {
         std::unique_lock<std::mutex> lock(queueMutex);
         taskAvailable.wait(lock, [&] {
             return !taskQueue.empty() || (allSensorsDone && taskQueue.empty());
         });
 
-        // Check for termination
+        // Chequeamos si hay tareas pendientes
         if (taskQueue.empty() && allSensorsDone) {
             break;
         }
 
-        // Retrieve task
+        // Obtenemos la tarea de la cola
         tarea = taskQueue.front();
         taskQueue.pop();
         taskRetrieved = true;
     }
 
     if (taskRetrieved) {
-        // Process task (250ms)
+        // Ejecutar una tarea (250ms)
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
-        // Report processing
+        // Avisamos que el robot procesó la tarea
         {
             std::lock_guard<std::mutex> consoleLock(consoleMutex);
             std::cout << "Robot " << id << " procesó tarea " << tarea.idTarea << std::endl;
@@ -120,7 +120,7 @@ void robot(int id) {
     }
 }
 
-// Robot finished
+// Finalización del robot
 {
     std::lock_guard<std::mutex> consoleLock(consoleMutex);
     std::cout << "Robot " << id << " finalizó su trabajo" << std::endl;
@@ -133,24 +133,24 @@ int main() {
     const int numRobots = 3; 
     const int tasksPerSensor = 10;
 
-    // Create sensor threads
+    // Creamos los sensores
     std::vector<std::thread> sensorThreads;
     for (int i = 0; i < numSensors; ++i) {
         sensorThreads.emplace_back(sensor, i, tasksPerSensor);
     }
 
-    // Create robot threads
+    // Creamos los robots
     std::vector<std::thread> robotThreads;
     for (int i = 0; i < numRobots; ++i) {
         robotThreads.emplace_back(robot, i);
     }
 
-    // Wait for sensors to finish
+    // Esperamos a que los sensores terminen
     for (auto& thread : sensorThreads) {
         thread.join();
     }
 
-    // Wait for robots to finish
+    // Esperamos a que los robots terminen
     for (auto& thread : robotThreads) {
         thread.join();
     }

@@ -3,24 +3,25 @@
 #include <array>
 #include <iostream>
 
-int main() { // Create five mutexes for the interference zones 
+int main() { // Creamos 5 mutex para representar las zonas
     
     std::array<std::mutex, 5> zones;
 
-    // Create five drones, each with its adjacent zones
+    // Creamos 5 drones, cada uno con su zona izquierda y derecha
     std::vector<std::unique_ptr<Dron>> drones;
     for (int i = 0; i < 5; ++i) {
-        // Left zone is i-1 (or 4 if i=0), right zone is i
+        // El indice de la zona izquierda es i-1, y el de la derecha es i.
         int leftZoneIdx = (i == 0) ? 4 : i - 1;
         drones.emplace_back(std::make_unique<Dron>(i, zones[leftZoneIdx], zones[i]));
     }
 
-    // Start all drones
+    // Iniciamos todos los drones
     for (auto& drone : drones) {
         drone->start();
     }
 
-    // Wait for all drones to complete
+    // Esperamos a que todos los drones terminen su ejecución
+    // Esto asegura que todos los drones hayan completado su tarea antes de finalizar el programa.
     for (auto& drone : drones) {
         drone->join();
     }

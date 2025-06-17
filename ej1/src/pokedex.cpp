@@ -27,10 +27,10 @@ void Pokedex::cargarDesdeArchivo() {
 
     while (file.peek() != EOF) {
         try {
-            // Read string lengths and strings
+            // Lee el nombre del Pokemon y sus demas atributos
             uint32_t nombreLen, tipoLen, descLen;
             file.read(reinterpret_cast<char*>(&nombreLen), sizeof(nombreLen));
-            if (file.eof()) break; // End of file reached
+            if (file.eof()) break; // Chequea si se llegó al final del archivo
             std::string nombre(nombreLen, '\0');
             file.read(&nombre[0], nombreLen);
 
@@ -45,7 +45,7 @@ void Pokedex::cargarDesdeArchivo() {
             std::string descripcion(descLen, '\0');
             file.read(&descripcion[0], descLen);
 
-            // Read attacks
+            // lee los ataques disponibles
             std::unordered_map<std::string, int> ataques;
             for (int i = 0; i < 3; ++i) {
                 uint32_t ataqueNombreLen;
@@ -57,7 +57,7 @@ void Pokedex::cargarDesdeArchivo() {
                 ataques[ataqueNombre] = ataqueDanio;
             }
 
-            // Read experience levels
+            // Lee los niveles de experiencia para el proximo nivel
             std::array<int, 3> expProximoNivel;
             for (int i = 0; i < 3; ++i) {
                 file.read(reinterpret_cast<char*>(&expProximoNivel[i]), sizeof(expProximoNivel[i]));
@@ -91,29 +91,29 @@ void Pokedex::guardarEnArchivo() const {
         const Pokemon& pokemon = entry.first;
         const PokemonInfo& info = entry.second;
 
-        // Write nombre
+        // Escribe nombre
         const std::string& nombre = pokemon.getNombre();
         uint32_t nombreLen = static_cast<uint32_t>(nombre.size());
         file.write(reinterpret_cast<const char*>(&nombreLen), sizeof(nombreLen));
         file.write(nombre.data(), nombreLen);
 
-        // Write experiencia
+        // Escribe experiencia
         int experiencia = pokemon.getExperiencia();
         file.write(reinterpret_cast<const char*>(&experiencia), sizeof(experiencia));
 
-        // Write tipo
+        // Escribe tipo
         const std::string& tipo = info.getTipo();
         uint32_t tipoLen = static_cast<uint32_t>(tipo.size());
         file.write(reinterpret_cast<const char*>(&tipoLen), sizeof(tipoLen));
         file.write(tipo.data(), tipoLen);
 
-        // Write descripcion
+        // Escribe descripcion
         const std::string& descripcion = info.getDescripcion();
         uint32_t descLen = static_cast<uint32_t>(descripcion.size());
         file.write(reinterpret_cast<const char*>(&descLen), sizeof(descLen));
         file.write(descripcion.data(), descLen);
 
-        // Write attacks
+        // Escribe ataques disponibles
         for (const auto& ataque : info.getAtaquesDisponiblesPorNivel()) {
             uint32_t ataqueNombreLen = static_cast<uint32_t>(ataque.first.size());
             file.write(reinterpret_cast<const char*>(&ataqueNombreLen), sizeof(ataqueNombreLen));
@@ -122,7 +122,7 @@ void Pokedex::guardarEnArchivo() const {
             file.write(reinterpret_cast<const char*>(&ataqueDanio), sizeof(ataqueDanio));
         }
 
-        // Write experience levels
+        // Escribe nivel de experiencia para el próximo nivel
         for (int exp : info.getExperienciaProximoNivel()) {
             file.write(reinterpret_cast<const char*>(&exp), sizeof(exp));
         }
