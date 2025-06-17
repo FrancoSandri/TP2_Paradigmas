@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <string>
 
+
+// Functor para hashear un Pokemon
 class PokemonHash {
     public:
         size_t operator()(const Pokemon& p) const {
