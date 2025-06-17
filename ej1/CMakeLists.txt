@@ -15,3 +15,4 @@ file(GLOB MAIN_FILES "main/*.cpp")
 
 # Crear ejecutable
 add_executable(ej1 ${SRC_FILES} ${MAIN_FILES})
+target_compile_options(ej1 PRIVATE -Wall -Wextra -Wpedantic)

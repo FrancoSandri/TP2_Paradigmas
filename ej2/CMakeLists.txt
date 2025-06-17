@@ -14,3 +14,4 @@ add_executable(ej2 ${SRC_FILES} ${MAIN_FILES})
 
 find_package(Threads REQUIRED)
 target_link_libraries(ej2 Threads::Threads)
+target_compile_options(ej2 PRIVATE -Wall -Wextra -Wpedantic)
